@@ -104,7 +104,8 @@ def load_abcd_data_generator(X, y, site, batch_size):
 
 def load_abcd_data(file_path):
    
-    hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/DistributedFL/final_dataset_1000subs.h5"
+    # hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/DistributedFL/final_dataset_1000subs.h5"
+    hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/final_dataset_1000subs.h5"
 
     # Load data from the HDF5 file
     abcd_data = {}

@@ -11,10 +11,10 @@ sys.path.append("..")
 sys.path.append("...")
 sys.path.append("....")
 #from fedml_api.model.cv.lenet5 import LeNet5
-sys.path.append('/data/users2/bthapaliya/DistributedFLExperiments/SailentWeightsDistributedFL')
-sys.path.append('/data/users2/bthapaliya/DistributedFLExperiments/SailentWeightsDistributedFL/fedml_api')
+sys.path.append("/data/users2/rohib/github-repos/NeuroImageDistTraining")
+sys.path.append('/data/users2/rohib/github-repos/NeuroImageDistTraining/fedml_api')
 
-sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/DistributedFLExperiments/SailentWeightsDistributedFL/data/"))
+sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL/data/"))
 from fedml_api.model.cv.salient_models import AlexNet3D_Dropout, ResNet_l3
 
 from fedml_api.data_preprocessing.cifar100.data_loader import load_partition_data_cifar100
@@ -39,7 +39,7 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='ABCD', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL',
+    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/DistributedFL',
                         help='data directory, please feel free to change the directory to the right place')
 
     parser.add_argument('--partition_method', type=str, default='dir', metavar='N',
@@ -120,7 +120,8 @@ def add_args(parser):
     parser.add_argument("--tag", type=str, default="test")
 
     #For SailentGrads
-    parser.add_argument("--snip_mask", default=True, action='store_true')
+    parser.add_argument("--snip_mask", action='store_true')
+    parser.add_argument("--logfile", type=str, default="logfile")
     return parser
 
 
@@ -242,12 +243,13 @@ if __name__ == "__main__":
     # logger = logger_config(log_path=log_path, logging_name=args.identity)
 
 
-    cur_dir = os.path.abspath(__file__).rsplit("/", 1)[0]
-    log_path = os.path.join(cur_dir, 'LOG/' + args.dataset + '/' + args.identity + '.log')
-    main_log_path = os.path.join('LOG/' + args.dataset)
+    # cur_dir = os.path.abspath(__file__).rsplit("/", 1)[0]
+    # log_path = os.path.join('LOG/' + args.dataset + '/' + '.log')
+
+    main_log_path = os.path.join(os.getcwd(),'LOG/' + args.dataset)
     if not os.path.exists(main_log_path):
         os.makedirs(main_log_path)
-    logger = logger_config(log_path='LOG/' + args.dataset + '/' + args.identity + '.log', logging_name=args.identity)
+    logger = logger_config(log_path=main_log_path + "/" + f"{args.logfile}.log", logging_name=args.logfile)
 
 
 

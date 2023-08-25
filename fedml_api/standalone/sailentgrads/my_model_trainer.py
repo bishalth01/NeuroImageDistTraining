@@ -10,7 +10,7 @@ from torch import nn
 from fedml_api.model.cv.cnn_meta import Meta_net
 import torch.nn.functional as F
 import types
-
+import pudb
 
 try:
     from fedml_core.trainer.model_trainer import ModelTrainer
@@ -195,7 +195,6 @@ class MyModelTrainer(ModelTrainer):
             epoch_loss = []
             #for batch_idx, (x, labels) in enumerate(train_data):
             for x, labels, _ in train_data:
-                
                 #For 3DConv Network
                 #x = torch.tensor(x, dtype=torch.float32)  # Convert to tensor
                 x = x.to(device)  # Convert to tensor
@@ -210,9 +209,14 @@ class MyModelTrainer(ModelTrainer):
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 10)
                 optimizer.step()
                 epoch_loss.append(loss.item())
-                for name, param in self.model.named_parameters():
-                    if name in masks:
-                        param.data *= masks[name].to(device)
+
+                if args.snip_mask: #NOTE: Will SKIP SNIP Masking for now
+                    for name, param in self.model.named_parameters():
+                        if name in masks:
+                            param.data *= masks[name].to(device)
+                # else:
+                    # print("\n Not using snip masks! \n")
+
             self.logger.info('Client Index = {}\tEpoch: {}\tLoss: {:.6f}'.format(
                 self.id, epoch, sum(epoch_loss) / len(epoch_loss)))
 
