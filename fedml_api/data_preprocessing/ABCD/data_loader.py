@@ -104,7 +104,7 @@ def load_abcd_data_generator(X, y, site, batch_size):
 
 def load_abcd_data(file_path):
    
-    hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/DistributedFL/final_dataset_1000subs.h5"
+    hdf5_file_name = file_path
 
     # Load data from the HDF5 file
     abcd_data = {}
@@ -115,7 +115,7 @@ def load_abcd_data(file_path):
     X = abcd_data['X']
     y = abcd_data['y']
     site = abcd_data['site']
-        # Convert to PyTorch tensors if needed
+    # Convert to PyTorch tensors if needed
     train_tensors = []
     test_tensors = []
     site_tensors = []
@@ -142,7 +142,7 @@ def load_abcd_data(file_path):
 def partition_data_abcd( datadir, partition, n_nets, alpha, logger):
     #X_train, X_test, y_train, y_test, site_train, site_test = load_abcd_data("")
 
-    train_tensors, test_tensors, site_tensors = load_abcd_data("")
+    train_tensors, test_tensors, site_tensors = load_abcd_data(datadir)
 
     logger.info("*********partition data based on site***************")
     # Perform partitioning based on 'site' information
@@ -211,6 +211,109 @@ def load_partition_data_abcd( data_dir, partition_method, partition_alpha, clien
 
     # Record partition details
     #record_part(y_test_tensor, traindata_cls_counts, test_dataidxs, logger)
+
+    return None, None, None, None, \
+           data_local_num_dict, train_data_local_dict, test_data_local_dict, 2 #traindata_cls_counts
+
+
+
+def load_partition_data_abcd_rescale( data_dir, partition_method, partition_alpha, client_number, batch_size, logger):
+    # X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts = partition_data_abcd(
+    #                                                                                          data_dir,
+    #                                                                                          partition_method,
+    #                                                                                          client_number,
+    #                                                                                          partition_alpha, logger)
+    
+    train_tensors, test_tensors, site_tensors = partition_data_abcd(                         data_dir,
+                                                                                             partition_method,
+                                                                                             client_number,
+                                                                                             partition_alpha, logger)
+
+    # # Create dictionaries to store local dataset details
+    # data_local_num_dict = dict()
+    # train_data_local_dict = dict()
+    # test_data_local_dict = dict()
+    # #N = 100  # Number of samples to select for each client
+
+    # Merge all train_tensor X, y, and site independently
+    all_X_train = torch.cat([train_tensors[i][0] for i in range(21)], dim=0)
+    all_y_train = torch.cat([train_tensors[i][1] for i in range(21)], dim=0)
+    all_site_train = torch.cat([train_tensors[i][2] for i in range(21)], dim=0)
+
+    # Merge all test_tensor X, y, and site independently
+    all_X_test = torch.cat([test_tensors[i][0] for i in range(21)], dim=0)
+    all_y_test = torch.cat([test_tensors[i][1] for i in range(21)], dim=0)
+    all_site_test = torch.cat([test_tensors[i][2] for i in range(21)], dim=0)
+
+    # Convert tensors to Float32
+    all_X_train = all_X_train.float()
+    all_y_train = all_y_train.float()
+    all_site_train = all_site_train.float()
+
+    all_X_test = all_X_test.float()
+    all_y_test = all_y_test.float()
+    all_site_test = all_site_test.float()
+
+    # Convert tensors to PyTorch datasets
+    all_train_dataset = TensorDataset(all_X_train, all_y_train, all_site_train)
+    all_test_dataset = TensorDataset(all_X_test, all_y_test, all_site_test)
+    # Create dictionaries to store local dataset details
+    data_local_num_dict = dict()
+    train_data_local_dict = dict()
+    test_data_local_dict = dict()
+    total_samples = len(all_X_train)  # Total number of samples
+
+    # Calculate the number of samples per client
+    samples_per_client = total_samples // client_number
+
+    # Loop through each client
+    for client_idx in range(client_number):
+        # Calculate the start and end indices for selecting data
+        start_idx = client_idx * samples_per_client
+        end_idx = start_idx + samples_per_client
+        
+        # Select data indices for the current client from the merged train data
+        selected_train_indices = list(range(start_idx, end_idx))
+        
+        # Select data indices for the current client from the merged test data
+        test_start_idx = int(start_idx * 0.2)  # 20% test data
+        test_end_idx = int(end_idx * 0.2)
+        selected_test_indices = list(range(test_start_idx, test_end_idx))
+        
+         # Convert selected data indices to tensors
+        X_train_tensor = all_X_train[selected_train_indices]
+        y_train_tensor = all_y_train[selected_train_indices]
+        site_train_tensor = all_site_train[selected_train_indices]
+        
+        X_test_tensor = all_X_test[selected_test_indices]
+        y_test_tensor = all_y_test[selected_test_indices]
+        site_test_tensor = all_site_test[selected_test_indices]
+        
+        # Convert tensors to Float32
+        X_train_tensor = X_train_tensor.float()
+        y_train_tensor = y_train_tensor.float()
+        site_train_tensor = site_train_tensor.float()
+        X_test_tensor = X_test_tensor.float()
+        y_test_tensor = y_test_tensor.float()
+        site_test_tensor = site_test_tensor.float()
+        
+        # Convert tensors to PyTorch datasets
+        train_dataset = TensorDataset(X_train_tensor, y_train_tensor, site_train_tensor)
+        test_dataset = TensorDataset(X_test_tensor, y_test_tensor, site_test_tensor)
+        
+        # Create custom dataloaders for both train and test data
+        train_data_local = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        test_data_local = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+        
+        # Record local data number
+        local_data_num = len(train_data_local.dataset)
+        data_local_num_dict[client_idx] = local_data_num
+        logger.info("client_idx = %d, local_sample_number = %d" % (client_idx, local_data_num))
+        train_data_local_dict[client_idx] = train_data_local
+        test_data_local_dict[client_idx] = test_data_local
+
+        print("Done for client: " + str(client_idx))
+
 
     return None, None, None, None, \
            data_local_num_dict, train_data_local_dict, test_data_local_dict, 2 #traindata_cls_counts
