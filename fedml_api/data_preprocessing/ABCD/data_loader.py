@@ -312,7 +312,7 @@ def load_partition_data_abcd_rescale( data_dir, partition_method, partition_alph
         train_data_local_dict[client_idx] = train_data_local
         test_data_local_dict[client_idx] = test_data_local
 
-        print("Done for client: " + str(client_idx))
+        print("Loading complete for client: " + str(client_idx))
 
 
     return None, None, None, None, \
