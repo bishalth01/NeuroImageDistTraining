@@ -11,10 +11,17 @@ sys.path.append("..")
 sys.path.append("...")
 sys.path.append("....")
 #from fedml_api.model.cv.lenet5 import LeNet5
+<<<<<<< HEAD
 # sys.path.append('/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL')
 # sys.path.append('/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL/fedml_api')
 
 # sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL/data/"))
+=======
+sys.path.append('/data/users2/bthapaliya/DistributedFLExperiments/SailentWeightsDistributedFL')
+sys.path.append('/data/users2/bthapaliya/DistributedFLExperiments/SailentWeightsDistributedFL/fedml_api')
+
+sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/DistributedFLExperiments/SailentWeightsDistributedFL/data/"))
+>>>>>>> e3186c8b984d0232c2efae88d81037b44e8e90c5
 from fedml_api.model.cv.salient_models import AlexNet3D_Dropout, ResNet_l3
 
 from fedml_api.data_preprocessing.cifar100.data_loader import load_partition_data_cifar100
@@ -39,7 +46,11 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='ABCD', metavar='N',
                         help='dataset used for training')
 
+<<<<<<< HEAD
     parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/final_dataset_1000subs.h5',
+=======
+    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL',
+>>>>>>> e3186c8b984d0232c2efae88d81037b44e8e90c5
                         help='data directory, please feel free to change the directory to the right place')
 
     parser.add_argument('--partition_method', type=str, default='dir', metavar='N',
