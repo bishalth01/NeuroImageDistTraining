@@ -23,7 +23,7 @@ from fedml_api.model.cv.cnn_cifar10 import cnn_cifar10, cnn_cifar100
 from fedml_api.standalone.DisPFL.dispfl_api import dispflAPI
 from fedml_api.standalone.sailentgrads.sailentgrads_api import SailentGradsAPI
 from fedml_api.data_preprocessing.cifar10.data_loader import load_partition_data_cifar10
-from fedml_api.data_preprocessing.ABCD.data_loader import load_partition_data_abcd
+from fedml_api.data_preprocessing.ABCD.data_loader import load_partition_data_abcd, load_partition_data_abcd_rescale
 from fedml_api.data_preprocessing.tiny_imagenet.data_loader import load_partition_data_tiny
 from fedml_api.model.cv.resnet import  customized_resnet18, original_resnet18, tiny_resnet18
 from fedml_api.standalone.sailentgrads.my_model_trainer import MyModelTrainer
@@ -39,7 +39,9 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='ABCD', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/DistributedFL',
+
+    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/final_dataset_1000subs.h5',
+
                         help='data directory, please feel free to change the directory to the right place')
 
     parser.add_argument('--partition_method', type=str, default='dir', metavar='N',
@@ -73,7 +75,7 @@ def add_args(parser):
     parser.add_argument('--epochs', type=int, default=2, metavar='EP',
                         help='local training epochs for each client')
 
-    parser.add_argument('--client_num_in_total', type=int, default=21, metavar='NN',
+    parser.add_argument('--client_num_in_total', type=int, default=5, metavar='NN',
                         help='number of workers in a distributed cluster')
 
     parser.add_argument('--frac', type=float, default=0.5, metavar='NN',
@@ -127,10 +129,10 @@ def add_args(parser):
 
 def load_data(args, dataset_name):
     if dataset_name == "ABCD":
-        args.data_dir += "ABCD"
+        #args.data_dir += "ABCD"
         train_data_num, test_data_num, train_data_global, test_data_global, \
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
-        class_num = load_partition_data_abcd(args.data_dir, args.partition_method,
+        class_num = load_partition_data_abcd_rescale(args.data_dir, args.partition_method,
                                 args.partition_alpha, args.client_num_in_total, args.batch_size, logger)
 
     if dataset_name == "cifar10":
