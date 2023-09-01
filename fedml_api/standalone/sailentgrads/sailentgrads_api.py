@@ -88,11 +88,18 @@ class SailentGradsAPI(object):
         params = self.model_trainer.get_trainable_params() #Model is same, so get parameters
 
         #Generate sailency scores, and update masks
-
         if self.args.snip_mask:
             temp = self.generate_global_mask_snip()
             mask_pers_local = [copy.deepcopy(temp) for i in range(self.args.client_num_in_total)]
-        
+        else: # NOTE: This is just a hacky way to test what happens without masking, in the regular dense setting. Delete when done!
+            temp = self.generate_global_mask_snip()
+            mask_pers_local = [copy.deepcopy(temp) for i in range(self.args.client_num_in_total)]
+            
+            for i, weights_d in enumerate(mask_pers_local):
+                for key, weights in weights_d.items():
+                    mask_pers_local[i][key] = torch.ones_like(weights)
+
+
         w_global = self.model_trainer.get_model_params() #Make a copy of model parameters
         w_per_mdls = []  #To store masked model parameters
         
@@ -134,6 +141,8 @@ class SailentGradsAPI(object):
             #Just testing the sparsity
             mask_sps = self.get_model_sps_for_weight(w_global)
             self._test_on_all_clients(w_global, w_per_mdls, round_idx)
+
+            # import pudb; pudb.set_trace()
 
         self._test_on_all_clients(w_global, w_per_mdls, -1)
 
