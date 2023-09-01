@@ -245,14 +245,12 @@ if __name__ == "__main__":
     # logger = logger_config(log_path=log_path, logging_name=args.identity)
 
 
-    # cur_dir = os.path.abspath(__file__).rsplit("/", 1)[0]
-    # log_path = os.path.join('LOG/' + args.dataset + '/' + '.log')
-
-    main_log_path = os.path.join(os.getcwd(),'LOG/' + args.dataset)
+    cur_dir = os.path.abspath(__file__).rsplit("/", 1)[0]
+    log_path = os.path.join(cur_dir, 'LOG/' + args.dataset + '/' + args.identity + '.log')
+    main_log_path = os.path.join('LOG/' + args.dataset)
     if not os.path.exists(main_log_path):
         os.makedirs(main_log_path)
-    logger = logger_config(log_path=main_log_path + "/" + f"{args.logfile}.log", logging_name=args.logfile)
-
+    logger = logger_config(log_path='LOG/' + args.dataset + '/' + args.identity + '.log', logging_name=args.identity)
 
 
 
