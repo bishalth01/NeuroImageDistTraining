@@ -8,11 +8,11 @@ import numpy as np
 import torch
 sys.path.append(".")
 sys.path.append("..")
-sys.path.append("...")
-sys.path.append("....")
+sys.path.append("../..")
+sys.path.append("../../..")
 #from fedml_api.model.cv.lenet5 import LeNet5
-sys.path.append("/data/users2/rohib/github-repos/NeuroImageDistTraining")
-sys.path.append('/data/users2/rohib/github-repos/NeuroImageDistTraining/fedml_api')
+# sys.path.append("/data/users2/rohib/github-repos/NeuroImageDistTraining")
+# sys.path.append('/data/users2/rohib/github-repos/NeuroImageDistTraining/fedml_api')
 
 sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL/data/"))
 from fedml_api.model.cv.salient_models import AlexNet3D_Dropout, ResNet_l3
@@ -75,7 +75,7 @@ def add_args(parser):
     parser.add_argument('--epochs', type=int, default=2, metavar='EP',
                         help='local training epochs for each client')
 
-    parser.add_argument('--client_num_in_total', type=int, default=5, metavar='NN',
+    parser.add_argument('--client_num_in_total', type=int, default=4, metavar='NN',
                         help='number of workers in a distributed cluster')
 
     parser.add_argument('--frac', type=float, default=0.5, metavar='NN',
@@ -122,7 +122,7 @@ def add_args(parser):
     parser.add_argument("--tag", type=str, default="test")
 
     #For SailentGrads
-    parser.add_argument("--snip_mask", action='store_true')
+    parser.add_argument("--snip_mask", type=bool, default=True)
     parser.add_argument("--logfile", type=str, default="logfile")
     return parser
 

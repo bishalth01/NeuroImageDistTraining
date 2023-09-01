@@ -210,12 +210,10 @@ class MyModelTrainer(ModelTrainer):
                 optimizer.step()
                 epoch_loss.append(loss.item())
 
-                if args.snip_mask: #NOTE: Will SKIP SNIP Masking for now
+                if args.snip_mask:
                     for name, param in self.model.named_parameters():
                         if name in masks:
                             param.data *= masks[name].to(device)
-                # else:
-                    # print("\n Not using snip masks! \n")
 
             self.logger.info('Client Index = {}\tEpoch: {}\tLoss: {:.6f}'.format(
                 self.id, epoch, sum(epoch_loss) / len(epoch_loss)))
@@ -234,11 +232,9 @@ class MyModelTrainer(ModelTrainer):
             'test_loss': 0,
             'test_total': 0
         }
-
         criterion = nn.BCEWithLogitsLoss().to(device)
 
         with torch.no_grad():
-            #for batch_idx, (x, target) in enumerate(test_data):
             for x, target, _ in test_data:
                 #For 3DConv Network
                 #x = torch.tensor(x, dtype=torch.float32)  # Convert to tensor
@@ -247,17 +243,20 @@ class MyModelTrainer(ModelTrainer):
 
                 #x = x.to(device)
                 target = target.to(device)
-                pred = model(x)
+                pred = F.sigmoid(model(x))
                 loss = criterion(pred, target.unsqueeze(1).float())
 
-                _, predicted = torch.max(pred, -1)
-                correct = predicted.eq(target).sum()
+                final_preds = (pred >= 0.5).float().squeeze(1)
+                correct = (final_preds == target).float().sum()
+                accuracy = correct / len(target)
 
                 metrics['test_correct'] += correct.item()
                 metrics['test_loss'] += loss.item() * target.size(0)
                 metrics['test_total'] += target.size(0)
                 metrics['test_acc'] = metrics['test_correct'] / metrics['test_total']
         return metrics
+
+
 
     def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None) -> bool:
         return False
