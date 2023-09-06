@@ -8,13 +8,13 @@ import numpy as np
 import torch
 sys.path.append(".")
 sys.path.append("..")
-sys.path.append("../..")
-sys.path.append("../../..")
+sys.path.append("...")
+sys.path.append("....")
 #from fedml_api.model.cv.lenet5 import LeNet5
-# sys.path.append("/data/users2/rohib/github-repos/NeuroImageDistTraining")
-# sys.path.append('/data/users2/rohib/github-repos/NeuroImageDistTraining/fedml_api')
+sys.path.append('/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL')
+sys.path.append('/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/fedml_api')
 
-sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL/data/"))
+sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/data"))
 from fedml_api.model.cv.salient_models import AlexNet3D_Dropout, ResNet_l3
 
 from fedml_api.data_preprocessing.cifar100.data_loader import load_partition_data_cifar100
@@ -40,7 +40,7 @@ def add_args(parser):
                         help='dataset used for training')
 
 
-    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/final_dataset_1000subs.h5',
+    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/final_dataset_allsubs.h5',
 
                         help='data directory, please feel free to change the directory to the right place')
 
@@ -64,7 +64,7 @@ def add_args(parser):
     parser.add_argument('--client_optimizer', type=str, default='sgd',
                         help='SGD with momentum')
 
-    parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
+    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                         help='learning rate')
 
     parser.add_argument('--lr_decay', type=float, default=0.998, metavar='LR_decay',
@@ -78,7 +78,7 @@ def add_args(parser):
     parser.add_argument('--client_num_in_total', type=int, default=4, metavar='NN',
                         help='number of workers in a distributed cluster')
 
-    parser.add_argument('--frac', type=float, default=0.5, metavar='NN',
+    parser.add_argument('--frac', type=float, default=1, metavar='NN',
                         help='available communication fraction each round')
 
     parser.add_argument('--momentum', type=float, default=0, metavar='NN',
@@ -132,7 +132,7 @@ def load_data(args, dataset_name):
         #args.data_dir += "ABCD"
         train_data_num, test_data_num, train_data_global, test_data_global, \
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
-        class_num = load_partition_data_abcd_rescale(args.data_dir, args.partition_method,
+        class_num = load_partition_data_abcd(args.data_dir, args.partition_method,
                                 args.partition_alpha, args.client_num_in_total, args.batch_size, logger)
 
     if dataset_name == "cifar10":
@@ -236,6 +236,7 @@ if __name__ == "__main__":
     args.identity += "-dr" + str(args.dense_ratio)
     args.identity += "-active" + str(args.active)
     args.identity += '-seed' + str(args.seed)
+    args.identity += '-lr' + str(args.lr)
     args.identity += '-batchsize' + str(args.batch_size)
     args.identity += '-iteration' + str(args.itersnip_iteration)
     args.identity += '-stratified' + str(args.stratified_sampling)

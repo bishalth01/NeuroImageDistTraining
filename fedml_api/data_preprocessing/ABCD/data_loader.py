@@ -65,7 +65,7 @@ def _data_transforms_abcd():
 
 
 def load_abcd_data_generator(X, y, site, batch_size):
-    #train_transform, test_transform = _data_transforms_abcd()
+    train_transform, test_transform = _data_transforms_abcd()
 
 
     unique_sites = np.unique(site)
@@ -104,17 +104,22 @@ def load_abcd_data_generator(X, y, site, batch_size):
 
 def load_abcd_data(file_path):
    
-    hdf5_file_name = file_path
+    #hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/final_dataset_500subs.h5"
 
+    hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/dataset_all_labels_site.h5"
     # Load data from the HDF5 file
     abcd_data = {}
     with h5py.File(hdf5_file_name, 'r') as hdf5_file:
         for key in hdf5_file.keys():
             abcd_data[key] = hdf5_file[key][()]
 
-    X = abcd_data['X']
+    
     y = abcd_data['y']
     site = abcd_data['site']
+    X = torch.arange(0, y.shape[0], 1)
+    #X = abcd_data['X']
+
+
     # Convert to PyTorch tensors if needed
     train_tensors = []
     test_tensors = []
@@ -145,18 +150,6 @@ def partition_data_abcd( datadir, partition, n_nets, alpha, logger):
     train_tensors, test_tensors, site_tensors = load_abcd_data(datadir)
 
     logger.info("*********partition data based on site***************")
-    # Perform partitioning based on 'site' information
-
-    # site_train = 21
-    # unique_sites = np.unique(site_train)
-    # n_sites = len(unique_sites)
-    # n_nets = n_sites  # Number of clients will be the number of unique sites
-
-    # net_dataidx_map = {i: np.where(site_train == site)[0] for i, site in enumerate(unique_sites)}
-
-    # traindata_cls_counts = record_net_data_stats(y_train, net_dataidx_map)
-
-    # return X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts
 
     return train_tensors, test_tensors, site_tensors
 
@@ -204,8 +197,11 @@ def load_partition_data_abcd( data_dir, partition_method, partition_alpha, clien
 
         # Record local data number
         local_data_num = len(train_data_local.dataset)
+        local_test_data_num = len(test_data_local.dataset)
         data_local_num_dict[client_idx] = local_data_num
-        logger.info("client_idx = %d, local_sample_number = %d" % (client_idx, local_data_num))
+        logger.info("Printing the data")
+        logger.info("client_idx = %d, local_train_sample_number = %d, local_test_sample_number = %d" % (client_idx, local_data_num, local_test_data_num))
+        print("client_idx = %d, local_train_sample_number = %d, local_test_sample_number = %d" % (client_idx, local_data_num, local_test_data_num))
         train_data_local_dict[client_idx] = train_data_local
         test_data_local_dict[client_idx] = test_data_local
 
@@ -308,7 +304,7 @@ def load_partition_data_abcd_rescale( data_dir, partition_method, partition_alph
         # Record local data number
         local_data_num = len(train_data_local.dataset)
         data_local_num_dict[client_idx] = local_data_num
-        logger.info("client_idx = %d, local_sample_number = %d" % (client_idx, local_data_num))
+        logger.info("client_idxss = %d, local_sample_number = %d" % (client_idx, local_data_num))
         train_data_local_dict[client_idx] = train_data_local
         test_data_local_dict[client_idx] = test_data_local
 

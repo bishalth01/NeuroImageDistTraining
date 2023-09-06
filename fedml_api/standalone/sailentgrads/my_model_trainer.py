@@ -6,11 +6,12 @@ import numpy as np
 import pdb
 import torch
 from torch import nn
+import sys
 
-from fedml_api.model.cv.cnn_meta import Meta_net
 import torch.nn.functional as F
 import types
 import pudb
+import h5py
 
 try:
     from fedml_core.trainer.model_trainer import ModelTrainer
@@ -181,6 +182,21 @@ class MyModelTrainer(ModelTrainer):
             gradient[name] = param.grad.to("cpu")
         return gradient
 
+    def load_data_chunks_batch(self, indexes):
+        hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/alldatain8bitsnormalized.h5"
+        # Open the HDF5 file
+        with h5py.File(hdf5_file_name, 'r') as hdf5_file:
+            num_samples = len(hdf5_file['X'])  # Assuming 'X' is your dataset name
+            mask_indexes = indexes.numpy().astype(int)
+            mask_indexes = np.sort(mask_indexes)
+
+            # Load the data batch
+            X_batch = hdf5_file['X'][mask_indexes]
+            y_batch = hdf5_file['y'][mask_indexes]
+        
+        X_batch = torch.tensor(X_batch,dtype=torch.float32, device="cuda")
+        y_batch = torch.tensor(y_batch,dtype=torch.float32, device="cuda")
+        return X_batch, y_batch
 
     def train(self, train_data,  device,  args, round, masks):
         # torch.manual_seed(0)
@@ -196,8 +212,7 @@ class MyModelTrainer(ModelTrainer):
             #for batch_idx, (x, labels) in enumerate(train_data):
             for x, labels, _ in train_data:
                 #For 3DConv Network
-                #x = torch.tensor(x, dtype=torch.float32)  # Convert to tensor
-                x = x.to(device)  # Convert to tensor
+                x, labels = self.load_data_chunks_batch(x)
                 x = x.unsqueeze(1)
 
                 x, labels = x.to(device), labels.to(device)
@@ -214,6 +229,7 @@ class MyModelTrainer(ModelTrainer):
                     for name, param in self.model.named_parameters():
                         if name in masks:
                             param.data *= masks[name].to(device)
+                
 
             self.logger.info('Client Index = {}\tEpoch: {}\tLoss: {:.6f}'.format(
                 self.id, epoch, sum(epoch_loss) / len(epoch_loss)))
@@ -238,10 +254,11 @@ class MyModelTrainer(ModelTrainer):
             for x, target, _ in test_data:
                 #For 3DConv Network
                 #x = torch.tensor(x, dtype=torch.float32)  # Convert to tensor
-                x = x.to(device)  # Convert to tensor
+                #x = x.to(device)  # Convert to tensor
+                x, target = self.load_data_chunks_batch(x)
                 x = x.unsqueeze(1)
 
-                #x = x.to(device)
+                x = x.to(device)
                 target = target.to(device)
                 pred = F.sigmoid(model(x))
                 loss = criterion(pred, target.unsqueeze(1).float())

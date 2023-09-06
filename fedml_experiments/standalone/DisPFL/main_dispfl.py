@@ -11,15 +11,19 @@ sys.path.append(".")
 sys.path.append("..")
 sys.path.append("...")
 sys.path.append("....")
-sys.path.append('/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL')
-sys.path.append('/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL/fedml_api')
-sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL/data/"))
+#from fedml_api.model.cv.lenet5 import LeNet5
+sys.path.append('/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL')
+sys.path.append('/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/fedml_api')
+
+sys.path.insert(0, os.path.abspath("/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/data"))
+from fedml_api.model.cv.salient_models import AlexNet3D_Dropout, ResNet_l3
 
 from fedml_api.data_preprocessing.cifar100.data_loader import load_partition_data_cifar100
 from fedml_api.model.cv.vgg import vgg16, vgg11
 from fedml_api.model.cv.cnn_cifar10 import cnn_cifar10, cnn_cifar100
 from fedml_api.standalone.DisPFL.dispfl_api import dispflAPI
 from fedml_api.data_preprocessing.cifar10.data_loader import load_partition_data_cifar10
+from fedml_api.data_preprocessing.ABCD.data_loader import load_partition_data_abcd, load_partition_data_abcd_rescale
 from fedml_api.data_preprocessing.tiny_imagenet.data_loader import load_partition_data_tiny
 from fedml_api.model.cv.resnet import  customized_resnet18, tiny_resnet18, original_resnet18
 from fedml_api.standalone.DisPFL.my_model_trainer import MyModelTrainer
@@ -29,13 +33,13 @@ def add_args(parser):
     parser : argparse.ArgumentParser
     return a parser added with args required by fit
     """
-    parser.add_argument('--model', type=str, default='resnet18', metavar='N',
+    parser.add_argument('--model', type=str, default='3DCNN', metavar='N',
                         help="network architecture, supporting 'cnn_cifar10', 'cnn_cifar100', 'resnet18', 'vgg11'")
 
-    parser.add_argument('--dataset', type=str, default='cifar10', metavar='N',
+    parser.add_argument('--dataset', type=str, default='ABCD', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/DistributedFLExperiments/DistributedFL/data/',
+    parser.add_argument('--data_dir', type=str, default='/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/final_dataset_allsubs.h5',
                         help='data directory, please feel free to change the directory to the right place')
 
     parser.add_argument('--partition_method', type=str, default='dir', metavar='N',
@@ -46,13 +50,13 @@ def add_args(parser):
     parser.add_argument('--partition_alpha', type=float, default=0.3, metavar='PA',
                         help='available parameters for data partition method')
 
-    parser.add_argument('--batch_size', type=int, default=128, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=16, metavar='N',
                         help='local batch size for training')
 
     parser.add_argument('--client_optimizer', type=str, default='sgd',
                         help='SGD with momentum')
 
-    parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+    parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                         help='learning rate')
 
     parser.add_argument('--lr_decay', type=float, default=0.998, metavar='LR_decay',
@@ -63,7 +67,7 @@ def add_args(parser):
     parser.add_argument('--epochs', type=int, default=5, metavar='EP',
                         help='local training epochs for each client')
 
-    parser.add_argument('--client_num_in_total', type=int, default=100, metavar='NN',
+    parser.add_argument('--client_num_in_total', type=int, default=21, metavar='NN',
                         help='number of workers in a distributed cluster')
 
     parser.add_argument('--frac', type=float, default=0.1, metavar='NN',
@@ -110,7 +114,13 @@ def add_args(parser):
 
 
 def load_data(args, dataset_name):
-    if dataset_name == "cifar10":
+    if dataset_name == "ABCD":
+        #args.data_dir += "ABCD"
+        train_data_num, test_data_num, train_data_global, test_data_global, \
+        train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
+        class_num = load_partition_data_abcd(args.data_dir, args.partition_method,
+                                args.partition_alpha, args.client_num_in_total, args.batch_size, logger)
+    elif dataset_name == "cifar10":
         args.data_dir += "cifar10"
         train_data_num, test_data_num, train_data_global, test_data_global, \
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
@@ -136,8 +146,24 @@ def load_data(args, dataset_name):
 
 
 
+# def create_model(args, model_name,class_num):
+#     model = None
+#     if model_name == "cnn_cifar10":
+#         model = cnn_cifar10()
+#     elif model_name == "cnn_cifar100":
+#         model = cnn_cifar100()
+#     elif model_name == "resnet18" and args.dataset != 'tiny':
+#         model = customized_resnet18(class_num=class_num)
+#     elif model_name == "resnet18" and args.dataset == 'tiny':
+#         model = tiny_resnet18(class_num=class_num)
+#     elif model_name == "vgg11":
+#         model = vgg11(class_num)
+#     return model
+
 def create_model(args, model_name,class_num):
     model = None
+    if model_name == "3DCNN":
+        model = AlexNet3D_Dropout(num_classes=class_num)
     if model_name == "cnn_cifar10":
         model = cnn_cifar10()
     elif model_name == "cnn_cifar100":
@@ -149,7 +175,6 @@ def create_model(args, model_name,class_num):
     elif model_name == "vgg11":
         model = vgg11(class_num)
     return model
-
 
 def custom_model_trainer(args, model, logger):
     return MyModelTrainer(model, args, logger)
@@ -209,6 +234,7 @@ if __name__ == "__main__":
     args.identity += "-dr" + str(args.dense_ratio)
     args.identity += '-batchsize' + str(args.batch_size)
     args.identity += "-active" + str(args.active)
+    args.identity += '-lr' + str(args.lr)
     args.identity += '-seed' + str(args.seed)
 
     cur_dir = os.path.abspath(__file__).rsplit("/", 1)[0]
@@ -235,7 +261,7 @@ if __name__ == "__main__":
     dataset = load_data(args, args.dataset)
 
     # create model.
-    model = create_model(args, model_name=args.model,class_num=len(dataset[-1][0]))
+    model = create_model(args, model_name=args.model,class_num=1)
     model_trainer = custom_model_trainer(args, model, logger)
     logger.info(model)
     dispflAPI = dispflAPI(dataset, device, args, model_trainer, logger)

@@ -144,6 +144,9 @@ def count_model_param_flops(model=None,dataset=None, multiply_adds=True, full=Fa
     elif dataset == "cifar100":
         input_channel = 3
         input_res = 32
+    elif dataset == "ABCD":
+        input_channel = 1
+        input_res = 32
     elif dataset == "tiny":
         input_channel = 3
         input_res = 64

@@ -135,11 +135,11 @@ class dispflAPI(object):
                     self.logger.info("choose mask diff: " + str(nei_distances))
 
                 # Update each client's local model and the so-called consensus model
-                if active_ths_rnd[clnt_idx] == 1:
-                    w_local_mdl, w_per_globals[clnt_idx] = self._aggregate_func(clnt_idx, self.args.client_num_in_total, self.args.client_num_per_round, nei_indexs,
-                                    w_per_mdls_lstrd, mask_pers_local, mask_pers_shared_lstrd)
-                else:
-                    w_local_mdl, w_per_globals[clnt_idx] = copy.deepcopy(w_per_mdls_lstrd[clnt_idx]), copy.deepcopy(w_per_mdls_lstrd[clnt_idx])
+                # if active_ths_rnd[clnt_idx] == 1:
+                #     w_local_mdl, w_per_globals[clnt_idx] = self._aggregate_func(clnt_idx, self.args.client_num_in_total, self.args.client_num_per_round, nei_indexs,
+                #                     w_per_mdls_lstrd, mask_pers_local, mask_pers_shared_lstrd)
+                # else:
+                w_local_mdl, w_per_globals[clnt_idx] = copy.deepcopy(w_per_mdls_lstrd[clnt_idx]), copy.deepcopy(w_per_mdls_lstrd[clnt_idx])
 
                 # 聚合好模型后，更新shared mask
                 mask_pers_shared[clnt_idx] = copy.deepcopy(mask_pers_local[clnt_idx])

@@ -8,6 +8,7 @@ import torch
 import torch.utils.data as data
 from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 from torch.utils.data import Subset
+import h5py
 from fedml_api.standalone.sailentgrads.snip import get_snip_scores, get_mean_sailency_scores
 
 class Client:
@@ -42,12 +43,34 @@ class Client:
                 final_sailency_list.append(local_abs_grads)
         else:
             for i in range(itersnip_iteration):
+                #local_training_data = self.load_data_chunks(local_training_data)
                 train_mini_batch = next(iter(local_training_data))
+                train_mini_batch = self.load_data_chunks(train_mini_batch)
                 local_abs_grads = get_snip_scores(self.model_trainer,train_mini_batch)
                 final_sailency_list.append(local_abs_grads)
             
         mean_sailency_score = get_mean_sailency_scores(final_sailency_list)
         return mean_sailency_score
+    
+    def load_data_chunks(self, train_mini_batch):
+        indexes = train_mini_batch[0]
+        hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/alldatain8bitsnormalized.h5"
+        # Open the HDF5 file
+        with h5py.File(hdf5_file_name, 'r') as hdf5_file:
+            num_samples = len(hdf5_file['X'])  # Assuming 'X' is your dataset name
+            mask_indexes = indexes.numpy().astype(int)
+            mask_indexes = np.sort(mask_indexes)
+
+            # Load the data batch
+            X_batch = hdf5_file['X'][mask_indexes]
+            y_batch = hdf5_file['y'][mask_indexes]
+        
+        X_batch = torch.tensor(X_batch,dtype=torch.float32, device="cuda")
+        y_batch = torch.tensor(y_batch,dtype=torch.float32, device="cuda")
+        train_mini_batch[0] = X_batch
+        train_mini_batch[1] = y_batch
+        return train_mini_batch
+
     
     
 

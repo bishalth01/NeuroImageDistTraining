@@ -55,8 +55,8 @@ class Client:
                 gradient = self.model_trainer.screen_gradients(self.local_training_data, self.device)
             masks, num_remove = self.fire_mask(masks, weights, round)
             masks = self.regrow_mask(masks, num_remove, gradient)
-        sparse_flops_per_data = self.model_trainer.count_training_flops_per_sample()
-        full_flops = self.model_trainer.count_full_flops_per_sample()
+        sparse_flops_per_data = 0 #self.model_trainer.count_training_flops_per_sample()
+        full_flops = 0#self.model_trainer.count_full_flops_per_sample()
         self.logger.info("training flops per data {}".format(sparse_flops_per_data))
         self.logger.info("full flops for search {}".format(full_flops))
         # we train the data for `self.args.epochs` epochs, and forward one epoch of data with full density to screen gradient.
