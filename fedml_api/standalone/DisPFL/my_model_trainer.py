@@ -146,6 +146,23 @@ class MyModelTrainer(ModelTrainer):
     #         gradient[name] = param.grad.to("cpu")
     #     return gradient
 
+    def load_data_chunks_batch(self, indexes):
+        hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/alldatain8bitsnormalized.h5"
+        # Open the HDF5 file
+        with h5py.File(hdf5_file_name, 'r') as hdf5_file:
+            num_samples = len(hdf5_file['X'])  # Assuming 'X' is your dataset name
+            mask_indexes = indexes.numpy().astype(int)
+            mask_indexes = np.sort(mask_indexes)
+
+            # Load the data batch
+            X_batch = hdf5_file['X'][mask_indexes]
+            y_batch = hdf5_file['y'][mask_indexes]
+        
+        X_batch = torch.tensor(X_batch,dtype=torch.float32, device="cuda")
+        y_batch = torch.tensor(y_batch,dtype=torch.float32, device="cuda")
+        return X_batch, y_batch
+
+
     def screen_gradients(self, train_data, device):
         model = self.model
         model.to(device)
@@ -155,6 +172,7 @@ class MyModelTrainer(ModelTrainer):
         # # sample one epoch  of data
         model.zero_grad()
         (x, labels, site) = next(iter(train_data))
+        x, labels = self.load_data_chunks_batch(x)
         
         #For 3DConv Network
         #x = torch.tensor(x, dtype=torch.float32)  # Convert to tensor
@@ -163,7 +181,7 @@ class MyModelTrainer(ModelTrainer):
 
         x, labels = x.to(device), labels.to(device)
         log_probs = model.forward(x)
-        loss = criterion(log_probs, labels.long())
+        loss = criterion(log_probs, labels.unsqueeze(1).float())
         loss.backward()
         gradient={}
         for name, param in model.named_parameters():
@@ -197,22 +215,6 @@ class MyModelTrainer(ModelTrainer):
     #                     param.data *= self.masks[name].to(device)
     #         self.logger.info('Client Index = {}\tEpoch: {}\tLoss: {:.6f}'.format(
     #             self.id, epoch, sum(epoch_loss) / len(epoch_loss)))
-
-    def load_data_chunks_batch(self, indexes):
-        hdf5_file_name = "/data/users2/bthapaliya/NeuroimageDistributedFL/SailentWeightsDistributedFL/alldatain8bitsnormalized.h5"
-        # Open the HDF5 file
-        with h5py.File(hdf5_file_name, 'r') as hdf5_file:
-            num_samples = len(hdf5_file['X'])  # Assuming 'X' is your dataset name
-            mask_indexes = indexes.numpy().astype(int)
-            mask_indexes = np.sort(mask_indexes)
-
-            # Load the data batch
-            X_batch = hdf5_file['X'][mask_indexes]
-            y_batch = hdf5_file['y'][mask_indexes]
-        
-        X_batch = torch.tensor(X_batch,dtype=torch.float32, device="cuda")
-        y_batch = torch.tensor(y_batch,dtype=torch.float32, device="cuda")
-        return X_batch, y_batch
 
     def train(self, train_data,  device,  args, round):
         # torch.manual_seed(0)
